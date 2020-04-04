@@ -1,0 +1,15 @@
+Planuję napisać język funkcyjny oparty na rachunku lambda z normalnymi
+feature'ami nowoczesnego języka funkcyjnego.
+
+Ma się nazywać The Infectious Monarchy Is Dead, w skrócie timid, na
+upamiętnienie okoliczności w jakich powstaje.
+
+Kluczowe cechy:
+* Funkcyjność oparta na rachunku lambda
+* Silne typowanie
+* Leniwość
+* Typy algebraiczne - ogólne polimorficzne i rekurencyjne z pattern
+    matchingiem
+
+Jeśli zdążę, to może będę chciała napisać algorytm rekonstrukcji typów.
+

@@ -1,0 +1,47 @@
+Nie planuję używać BNFC, więc moja gramatyka będzie w raczej nieformalnej
+składni. Używam standardowych konstrukcji z regexów:
+    (X)* to dowolnie wiele powtórzeń X
+    (X)+ to co najmniej jedno powtórzenie X
+Mój język nieszczególnie uwzglednia białe znaki, więc gramatyka też nie.
+
+operator to dowolny ze znaków +-*/%=
+identifier to ciąg znaków alfabetu łacińskiego zaczynający się z małej litery
+Identifier to ciąg znaków alfabetu łacińskiego zaczynający się z wielkiej
+    litery
+Int to poprawna liczba cakowita
+Char to dowolny znak ascii inny niż newline
+
+Comment = "//" Char* "\\"
+
+Type
+    = Int
+    | Bool
+    | Type "->" Type
+    | Identifier (Type)*
+
+Typedef = "typedef" Identifier identifier* "=" Identifier (Type | identifier)* ("|" Identifier (Type | identifier)*)*
+
+MExp
+    = identifier
+    | Identifier (identifier)*
+
+Exp
+    = "True"
+    | "False"
+    | Int
+    | Exp operator Exp
+    | "(" Exp ")"
+    | identifier
+    | Identifier
+    | Exp Exp                                   // aplikacja częsciowa
+    | "let " identifier (identifier)* "=" Exp   // definicja funkcji / zmiennej
+    | "fun" identifier* "->" Exp                // funkcja lambda
+    | "match" Exp ("|" MExp "->" Exp)+ "endmatch"
+    | "if " Exp " then " Exp " else " Exp "endif"
+
+TopLevelExp
+    = Typedef
+    | Comment
+    | Exp
+
+Program = TopLevelExp+

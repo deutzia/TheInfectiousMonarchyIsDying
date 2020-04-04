@@ -1,0 +1,27 @@
+// Typedef \\
+
+typedef Bool = True | False
+typedef List a = Empty | NonEmpty a
+typedef Either a b = Left a | Right b
+typedef CountingTree a = Leaf Int a | Node Int a CountingTree CountingTree
+
+// This is a comment \\
+
+// Exp \\
+True
+2 + 2 * 2
+x
+Empty
+Leaf 3
+let y = 3
+(fun x y -> x * y) 5 // funkcja mnożąca argument razy 5\\
+match t
+    | Leaf x a -> x
+    | Node x a t1 t2 ->
+        match t1
+            | Leaf y b -> y
+            | Node y b t3 t4 -> y
+        endmatch
+endmatch
+
+(fun x -> if x then 5 else 6) True
