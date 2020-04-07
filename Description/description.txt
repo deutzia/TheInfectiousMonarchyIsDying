@@ -13,3 +13,5 @@ Kluczowe cechy:
 
 Jeśli zdążę, to może będę chciała napisać algorytm rekonstrukcji typów.
 
+Język nie zawiera konstrukcji if, ale biblioteka standardowa zawiera funkcję
+trójargumentową ifte.

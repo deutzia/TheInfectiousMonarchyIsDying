@@ -4,7 +4,7 @@ składni. Używam standardowych konstrukcji z regexów:
     (X)+ to co najmniej jedno powtórzenie X
 Mój język nieszczególnie uwzglednia białe znaki, więc gramatyka też nie.
 
-operator to dowolny ze znaków +-*/%=
+operator to dowolny ze znaków +-*/%=<>&|
 identifier to ciąg znaków alfabetu łacińskiego zaczynający się z małej litery
 Identifier to ciąg znaków alfabetu łacińskiego zaczynający się z wielkiej
     litery
@@ -14,8 +14,8 @@ Char to dowolny znak ascii inny niż newline
 Comment = "//" Char* "\\"
 
 Type
-    = Int
-    | Bool
+    = "Int"
+    | "Bool"
     | Type "->" Type
     | Identifier (Type)*
 
@@ -24,6 +24,8 @@ Typedef = "typedef" Identifier identifier* "=" Identifier (Type | identifier)* (
 MExp
     = identifier
     | Identifier (identifier)*
+    | Int
+    | Bool
 
 Exp
     = "True"
@@ -35,13 +37,13 @@ Exp
     | Identifier
     | Exp Exp                                   // aplikacja częsciowa
     | "let " identifier (identifier)* "=" Exp   // definicja funkcji / zmiennej
+    | "let " identifier (identifier)* "=" Exp " in " Exp
     | "fun" identifier* "->" Exp                // funkcja lambda
     | "match" Exp ("|" MExp "->" Exp)+ "endmatch"
-    | "if " Exp " then " Exp " else " Exp "endif"
 
 TopLevelExp
-    = Typedef
+    = Typedef ";;"
     | Comment
-    | Exp
+    | Exp ";;"
 
 Program = TopLevelExp+
