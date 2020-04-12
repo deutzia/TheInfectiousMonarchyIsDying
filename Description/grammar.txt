@@ -36,8 +36,7 @@ Exp
     | identifier
     | Identifier
     | Exp Exp                                   // aplikacja częsciowa
-    | "let " identifier (identifier)* "=" Exp   // definicja funkcji / zmiennej
-    | "let " identifier (identifier)* "=" Exp " in " Exp
+    | "let " (identifier+ "=" Exp)+ " in " Exp
     | "fun" identifier* "->" Exp                // funkcja lambda
     | "match" Exp ("|" MExp "->" Exp)+ "endmatch"
 
@@ -45,5 +44,6 @@ TopLevelExp
     = Typedef ";;"
     | Comment
     | Exp ";;"
+    | "def" identifier (identifier)* "=" Exp ";;"// definicja funkcji / zmiennej
 
 Program = TopLevelExp+
