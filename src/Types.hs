@@ -111,6 +111,48 @@ builtin_neg =
         helper _ = undefined
     in Primitive 1 helper
 
+builtin_eq :: Primitive
+builtin_eq =
+    let
+        helper ((DInt n):[DInt m]) = DBool (n == m)
+        helper _ = undefined
+    in Primitive 2 helper
+
+builtin_neq :: Primitive
+builtin_neq =
+    let
+        helper ((DInt n):[DInt m]) = DBool (n /= m)
+        helper _ = undefined
+    in Primitive 2 helper
+
+builtin_lt :: Primitive
+builtin_lt =
+    let
+        helper ((DInt n):[DInt m]) = DBool (n < m)
+        helper _ = undefined
+    in Primitive 2 helper
+
+builtin_le :: Primitive
+builtin_le =
+    let
+        helper ((DInt n):[DInt m]) = DBool (n <= m)
+        helper _ = undefined
+    in Primitive 2 helper
+
+builtin_gt :: Primitive
+builtin_gt =
+    let
+        helper ((DInt n):[DInt m]) = DBool (n > m)
+        helper _ = undefined
+    in Primitive 2 helper
+
+builtin_ge :: Primitive
+builtin_ge =
+    let
+        helper ((DInt n):[DInt m]) = DBool (n >= m)
+        helper _ = undefined
+    in Primitive 2 helper
+
 {- | Primitives
 >>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_add) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
 DInt 4
@@ -123,6 +165,22 @@ DInt 3
 >>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_mod) (AData $ DInt 10) ) (AData $ DInt 3)) M.empty
 DInt 1
 >>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_land) (AData $ DBool True) ) (AData $ DBool True)) M.empty
+DBool True
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_lor) (AData $ DBool True) ) (AData $ DBool False)) M.empty
+DBool True
+>>> eval ( AFunApp (AData $DPrim builtin_neg) (AData $ DBool True) ) M.empty
+DBool False
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_eq) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
+DBool True
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_neq) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
+DBool False
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_lt) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
+DBool False
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_le) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
+DBool True
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_gt) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
+DBool False
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_ge) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
 DBool True
 -}
 
