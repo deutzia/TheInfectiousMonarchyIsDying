@@ -10,9 +10,9 @@ instance Show Data where
     show (DInt n) = "DInt " ++ show n
     show (DBool b) = "DBool " ++ show b
     show (DFun s t e) = "DFun " ++ show s ++ show t ++ show e
-    show (DPrim ( Primitive n f)) = "DPrim " ++ show n
+    show (DPrim ( Primitive name _ _)) = "DPrim " ++  name
 
-data Primitive = Primitive Int ([Data] -> Data)
+data Primitive = Primitive String Int ([Data] -> Data)
 
 -- abstract syntax tree
 data AST
@@ -33,10 +33,10 @@ eval (AFunApp fun arg) env =
     in
         case funval of
             DFun name tree fenv -> eval tree (M.insert name argval fenv)
-            DPrim (Primitive n fun) ->
+            DPrim (Primitive name n fun) ->
                 if n == 1
                     then fun [argval]
-                    else DPrim (Primitive (n-1) (\l -> fun (argval:l)))
+                    else DPrim (Primitive name (n-1) (\l -> fun (argval:l)))
             _ -> undefined
 eval (ALambda name tree) env = DFun name tree env
 eval (ALet l tree) env =
@@ -60,98 +60,98 @@ builtin_add =
     let
         helper ((DInt n):[DInt m]) = DInt (n + m)
         helper _ = undefined
-    in Primitive 2 helper
+    in Primitive "builtin_add" 2 helper
 
 builtin_sub :: Primitive
 builtin_sub =
     let
         helper ((DInt n):[DInt m]) = DInt (n - m)
         helper _ = undefined
-    in Primitive 2 helper
+    in Primitive "builtin_sub" 2 helper
 
 builtin_mul :: Primitive
 builtin_mul =
     let
         helper ((DInt n):[DInt m]) = DInt (n * m)
         helper _ = undefined
-    in Primitive 2 helper
+    in Primitive "builtin_mul" 2 helper
 
 builtin_div :: Primitive
 builtin_div =
     let
         helper ((DInt n):[DInt m]) = DInt (n `div` m)
         helper _ = undefined
-    in Primitive 2 helper
+    in Primitive "builtin_div" 2 helper
 
 builtin_mod :: Primitive
 builtin_mod =
     let
         helper ((DInt n):[DInt m]) = DInt (n `mod` m)
         helper _ = undefined
-    in Primitive 2 helper
+    in Primitive "builtin_mod" 2 helper
 
 builtin_land :: Primitive
 builtin_land =
     let
         helper ((DBool b1):[DBool b2]) = DBool (b1 && b2)
         helper _ = undefined
-    in Primitive 2 helper
+    in Primitive "builtin_land" 2 helper
 
 builtin_lor :: Primitive
 builtin_lor =
     let
         helper ((DBool b1):[DBool b2]) = DBool (b1 || b2)
         helper _ = undefined
-    in Primitive 2 helper
+    in Primitive "builtin_lor" 2 helper
 
 builtin_neg :: Primitive
 builtin_neg =
     let
         helper [DBool b] = DBool (not b)
         helper _ = undefined
-    in Primitive 1 helper
+    in Primitive "builtin_neg" 1 helper
 
 builtin_eq :: Primitive
 builtin_eq =
     let
         helper ((DInt n):[DInt m]) = DBool (n == m)
         helper _ = undefined
-    in Primitive 2 helper
+    in Primitive "builtin_eq" 2 helper
 
 builtin_neq :: Primitive
 builtin_neq =
     let
         helper ((DInt n):[DInt m]) = DBool (n /= m)
         helper _ = undefined
-    in Primitive 2 helper
+    in Primitive "builtin_neq" 2 helper
 
 builtin_lt :: Primitive
 builtin_lt =
     let
         helper ((DInt n):[DInt m]) = DBool (n < m)
         helper _ = undefined
-    in Primitive 2 helper
+    in Primitive "builtin_lt" 2 helper
 
 builtin_le :: Primitive
 builtin_le =
     let
         helper ((DInt n):[DInt m]) = DBool (n <= m)
         helper _ = undefined
-    in Primitive 2 helper
+    in Primitive "builtin_le" 2 helper
 
 builtin_gt :: Primitive
 builtin_gt =
     let
         helper ((DInt n):[DInt m]) = DBool (n > m)
         helper _ = undefined
-    in Primitive 2 helper
+    in Primitive "builtin_gt" 2 helper
 
 builtin_ge :: Primitive
 builtin_ge =
     let
         helper ((DInt n):[DInt m]) = DBool (n >= m)
         helper _ = undefined
-    in Primitive 2 helper
+    in Primitive "builtin_ge" 2 helper
 
 {- | Primitives
 >>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_add) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
