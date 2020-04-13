@@ -31,6 +31,9 @@ symbol = L.symbol sc
 rstring :: String -> Parser ()
 rstring s = try $ string s *> notFollowedBy (alphaNumChar <|> char '_') *> sc
 
+roperator :: String -> Parser ()
+roperator s = try $ string s *> notFollowedBy (oneOf "=-+*/\\<>!%&|~") *> sc
+
 -- Expression parsers
 pBool :: Parser AST
 pBool = do
@@ -39,8 +42,6 @@ pBool = do
 {- | pBool
 >>> parseTest pBool "True"
 AData DBool True
->>> parseTest pBool "Trueeee"
-unxepected 'e'
 -}
 
 pInt :: Parser AST
@@ -52,10 +53,14 @@ pInt = do
 AData DInt 3
 -}
 
+pLIdentifierString :: Parser String
+pLIdentifierString =
+    lexeme $ (:) <$> lowerChar <*> many alphaNumChar
+
 -- lower case identifier
 pLIdentifier :: Parser AST
 pLIdentifier = do
-    name <- lexeme $ (:) <$> lowerChar <*> many alphaNumChar
+    name <- pLIdentifierString
     return $ AVariable name
 
 -- upper case identifier
@@ -63,6 +68,28 @@ pUIdentifier :: Parser AST
 pUIdentifier = do
     name <- lexeme $ (:) <$> upperChar <*> many alphaNumChar
     return $ AVariable name
+
+pLetVar :: Parser (String, AST)
+pLetVar = do
+    name <- pLIdentifierString
+    roperator "="
+    exp <- pExpr
+    return (name, exp)
+
+pLet :: Parser AST
+pLet = do
+    rstring "let"
+    vars <- many pLetVar
+    exp <- pExpr
+    return $ ALet vars exp
+
+pLambda :: Parser AST
+pLambda = do
+    rstring "fun"
+    vars <- try (some pLIdentifierString)
+    roperator "->"
+    body <- pExpr
+    return $ foldr ALambda body vars
 
 pParens :: Parser a -> Parser a
 pParens = between (symbol "(") (symbol ")")
@@ -73,6 +100,8 @@ pTerm = choice
   , pLIdentifier
   , pUIdentifier
   , pInt
+  , pLambda
+  , pLet
   ]
 
 pExpr :: Parser AST
@@ -80,21 +109,26 @@ pExpr = E.makeExprParser pTerm operatorTable
 
 operatorTable :: [[E.Operator Parser AST]]
 operatorTable =
-  [ [ binary "" (\l r -> AFunApp l r)
+  [ [ binary "" AFunApp
     ]
-  , [ binary "*" (\l r -> AFunApp (AFunApp (AData $ DPrim builtin_mul) l) r)
-    , binary "/" (\l r -> AFunApp (AFunApp (AData $ DPrim builtin_div) l) r)
-    , binary "%" (\l r -> AFunApp (AFunApp (AData $ DPrim builtin_mod) l) r)
+  , [ binary "*" (\l r -> AFunApp (AFunApp (AData $ DPrim builtinMul) l) r)
+    , binary "/" (\l r -> AFunApp (AFunApp (AData $ DPrim builtinDiv) l) r)
+    , binary "%" (\l r -> AFunApp (AFunApp (AData $ DPrim builtinMod) l) r)
     ]
-  , [ binary "+" (\l r -> AFunApp (AFunApp (AData $ DPrim builtin_add) l) r)
-    , binary "-" (\l r -> AFunApp (AFunApp (AData $ DPrim builtin_sub) l) r)
+  , [ binary "+" (\l r -> AFunApp (AFunApp (AData $ DPrim builtinAdd) l) r)
+    , binary "-" (\l r -> AFunApp (AFunApp (AData $ DPrim builtinSub) l) r)
     ]
-  , [ binary ">=" (\l r -> AFunApp (AFunApp (AData $ DPrim builtin_ge) l) r)
-    , binary ">" (\l r -> AFunApp (AFunApp (AData $ DPrim builtin_gt) l) r)
-    , binary "<=" (\l r -> AFunApp (AFunApp (AData $ DPrim builtin_le) l) r)
-    , binary "<" (\l r -> AFunApp (AFunApp (AData $ DPrim builtin_lt) l) r)
-    , binary "==" (\l r -> AFunApp (AFunApp (AData $ DPrim builtin_eq) l) r)
-    , binary "!=" (\l r -> AFunApp (AFunApp (AData $ DPrim builtin_neq) l) r)
+  , [ binary ">=" (\l r -> AFunApp (AFunApp (AData $ DPrim builtinGe) l) r)
+    , binary ">" (\l r -> AFunApp (AFunApp (AData $ DPrim builtinGt) l) r)
+    , binary "<=" (\l r -> AFunApp (AFunApp (AData $ DPrim builtinLe) l) r)
+    , binary "<" (\l r -> AFunApp (AFunApp (AData $ DPrim builtinLt) l) r)
+    , binary "==" (\l r -> AFunApp (AFunApp (AData $ DPrim builtinEq) l) r)
+    , binary "!=" (\l r -> AFunApp (AFunApp (AData $ DPrim builtinNeq) l) r)
+    ]
+  , [ binary "||" (\l r -> AFunApp (AFunApp (AData $ DPrim builtinLor) l) r)
+    , binary "&&" (\l r -> AFunApp (AFunApp (AData $ DPrim builtinLand) l) r)
+    ]
+  , [ prefix "~" (AFunApp (AData $ DPrim builtinNeg))
     ]
   ]
 

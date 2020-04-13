@@ -49,138 +49,138 @@ eval (ALet l tree) env =
 DInt 5
 >>> eval ( AData $ DBool True ) M.empty
 DBool True
->>> eval ( ALet [("x", AData $ DInt 2), ("y", AData $ DInt 3)] ( AFunApp ( AFunApp (AData $ DPrim builtin_add) (AVariable "x") ) (AVariable "y"))) M.empty
+>>> eval ( ALet [("x", AData $ DInt 2), ("y", AData $ DInt 3)] ( AFunApp ( AFunApp (AData $ DPrim builtinAdd) (AVariable "x") ) (AVariable "y"))) M.empty
 DInt 5
->>> eval (AFunApp (AData (DFun "x" ( AFunApp ( AFunApp (AData $ DPrim builtin_mul) (AVariable "x") ) (AVariable "x")) M.empty)) (AData $ DInt 5)) M.empty
+>>> eval (AFunApp (AData (DFun "x" ( AFunApp ( AFunApp (AData $ DPrim builtinMul) (AVariable "x") ) (AVariable "x")) M.empty)) (AData $ DInt 5)) M.empty
 DInt 25
 -}
 
-builtin_add :: Primitive
-builtin_add =
+builtinAdd :: Primitive
+builtinAdd =
     let
-        helper ((DInt n):[DInt m]) = DInt (n + m)
+        helper (DInt n : [DInt m]) = DInt (n + m)
         helper _ = undefined
-    in Primitive "builtin_add" 2 helper
+    in Primitive "builtinAdd" 2 helper
 
-builtin_sub :: Primitive
-builtin_sub =
+builtinSub :: Primitive
+builtinSub =
     let
-        helper ((DInt n):[DInt m]) = DInt (n - m)
+        helper (DInt n : [DInt m]) = DInt (n - m)
         helper _ = undefined
-    in Primitive "builtin_sub" 2 helper
+    in Primitive "builtinSub" 2 helper
 
-builtin_mul :: Primitive
-builtin_mul =
+builtinMul :: Primitive
+builtinMul =
     let
-        helper ((DInt n):[DInt m]) = DInt (n * m)
+        helper (DInt n : [DInt m]) = DInt (n * m)
         helper _ = undefined
-    in Primitive "builtin_mul" 2 helper
+    in Primitive "builtinMul" 2 helper
 
-builtin_div :: Primitive
-builtin_div =
+builtinDiv :: Primitive
+builtinDiv =
     let
-        helper ((DInt n):[DInt m]) = DInt (n `div` m)
+        helper (DInt n : [DInt m]) = DInt (n `div` m)
         helper _ = undefined
-    in Primitive "builtin_div" 2 helper
+    in Primitive "builtinDiv" 2 helper
 
-builtin_mod :: Primitive
-builtin_mod =
+builtinMod :: Primitive
+builtinMod =
     let
-        helper ((DInt n):[DInt m]) = DInt (n `mod` m)
+        helper (DInt n : [DInt m]) = DInt (n `mod` m)
         helper _ = undefined
-    in Primitive "builtin_mod" 2 helper
+    in Primitive "builtinMod" 2 helper
 
-builtin_land :: Primitive
-builtin_land =
+builtinLand :: Primitive
+builtinLand =
     let
-        helper ((DBool b1):[DBool b2]) = DBool (b1 && b2)
+        helper (DBool b1 : [DBool b2]) = DBool (b1 && b2)
         helper _ = undefined
-    in Primitive "builtin_land" 2 helper
+    in Primitive "builtinLand" 2 helper
 
-builtin_lor :: Primitive
-builtin_lor =
+builtinLor :: Primitive
+builtinLor =
     let
-        helper ((DBool b1):[DBool b2]) = DBool (b1 || b2)
+        helper (DBool b1 : [DBool b2]) = DBool (b1 || b2)
         helper _ = undefined
-    in Primitive "builtin_lor" 2 helper
+    in Primitive "builtinLor" 2 helper
 
-builtin_neg :: Primitive
-builtin_neg =
+builtinNeg :: Primitive
+builtinNeg =
     let
         helper [DBool b] = DBool (not b)
         helper _ = undefined
-    in Primitive "builtin_neg" 1 helper
+    in Primitive "builtinNeg" 1 helper
 
-builtin_eq :: Primitive
-builtin_eq =
+builtinEq :: Primitive
+builtinEq =
     let
-        helper ((DInt n):[DInt m]) = DBool (n == m)
+        helper (DInt n : [DInt m]) = DBool (n == m)
         helper _ = undefined
-    in Primitive "builtin_eq" 2 helper
+    in Primitive "builtinEq" 2 helper
 
-builtin_neq :: Primitive
-builtin_neq =
+builtinNeq :: Primitive
+builtinNeq =
     let
-        helper ((DInt n):[DInt m]) = DBool (n /= m)
+        helper (DInt n : [DInt m]) = DBool (n /= m)
         helper _ = undefined
-    in Primitive "builtin_neq" 2 helper
+    in Primitive "builtinNeq" 2 helper
 
-builtin_lt :: Primitive
-builtin_lt =
+builtinLt :: Primitive
+builtinLt =
     let
-        helper ((DInt n):[DInt m]) = DBool (n < m)
+        helper (DInt n : [DInt m]) = DBool (n < m)
         helper _ = undefined
-    in Primitive "builtin_lt" 2 helper
+    in Primitive "builtinLt" 2 helper
 
-builtin_le :: Primitive
-builtin_le =
+builtinLe :: Primitive
+builtinLe =
     let
-        helper ((DInt n):[DInt m]) = DBool (n <= m)
+        helper (DInt n : [DInt m]) = DBool (n <= m)
         helper _ = undefined
-    in Primitive "builtin_le" 2 helper
+    in Primitive "builtinLe" 2 helper
 
-builtin_gt :: Primitive
-builtin_gt =
+builtinGt :: Primitive
+builtinGt =
     let
-        helper ((DInt n):[DInt m]) = DBool (n > m)
+        helper (DInt n : [DInt m]) = DBool (n > m)
         helper _ = undefined
-    in Primitive "builtin_gt" 2 helper
+    in Primitive "builtinGt" 2 helper
 
-builtin_ge :: Primitive
-builtin_ge =
+builtinGe :: Primitive
+builtinGe =
     let
-        helper ((DInt n):[DInt m]) = DBool (n >= m)
+        helper (DInt n : [DInt m]) = DBool (n >= m)
         helper _ = undefined
-    in Primitive "builtin_ge" 2 helper
+    in Primitive "builtinGe" 2 helper
 
 {- | Primitives
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_add) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtinAdd) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
 DInt 4
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_sub) (AData $ DInt 5) ) (AData $ DInt 2)) M.empty
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtinSub) (AData $ DInt 5) ) (AData $ DInt 2)) M.empty
 DInt 3
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_mul) (AData $ DInt 5) ) (AData $ DInt 2)) M.empty
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtinMul) (AData $ DInt 5) ) (AData $ DInt 2)) M.empty
 DInt 10
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_div) (AData $ DInt 10) ) (AData $ DInt 3)) M.empty
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtinDiv) (AData $ DInt 10) ) (AData $ DInt 3)) M.empty
 DInt 3
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_mod) (AData $ DInt 10) ) (AData $ DInt 3)) M.empty
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtinMod) (AData $ DInt 10) ) (AData $ DInt 3)) M.empty
 DInt 1
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_land) (AData $ DBool True) ) (AData $ DBool True)) M.empty
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtinLand) (AData $ DBool True) ) (AData $ DBool True)) M.empty
 DBool True
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_lor) (AData $ DBool True) ) (AData $ DBool False)) M.empty
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtinLor) (AData $ DBool True) ) (AData $ DBool False)) M.empty
 DBool True
->>> eval ( AFunApp (AData $DPrim builtin_neg) (AData $ DBool True) ) M.empty
+>>> eval ( AFunApp (AData $DPrim builtinNeg) (AData $ DBool True) ) M.empty
 DBool False
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_eq) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtinEq) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
 DBool True
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_neq) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtinNeq) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
 DBool False
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_lt) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtinLt) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
 DBool False
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_le) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtinLe) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
 DBool True
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_gt) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtinGt) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
 DBool False
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtin_ge) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
+>>> eval ( AFunApp ( AFunApp (AData $DPrim builtinGe) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
 DBool True
 -}
 
