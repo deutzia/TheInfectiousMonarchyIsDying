@@ -13,7 +13,7 @@ True ;;
 x ;;
 Empty ;;
 Leaf 3 ;;
-let y = 3 ;;
+def y = 3 ;;
 (fun x y -> x * y) 5 ;; // funkcja mnożąca argument razy 5\\
 match t
     | Leaf x a -> x
@@ -24,9 +24,9 @@ match t
         endmatch
 endmatch ;;
 
-(fun x -> if x then 5 else 6) True ;;
+(fun x -> if x then 5 else 6) . True ;;
 
-let ifte b e1 e2 =
+def ifte b e1 e2 =
     match b
         | True -> e1
         | False -> e2

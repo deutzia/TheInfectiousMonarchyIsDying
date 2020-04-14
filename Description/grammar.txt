@@ -35,10 +35,11 @@ Exp
     | "(" Exp ")"
     | identifier
     | Identifier
-    | Exp Exp                                   // aplikacja częsciowa
-    | "let " (identifier+ "=" Exp)+ " in " Exp
+    | Exp "." Exp                                   // aplikacja częsciowa
+    | "let " identifier+ "=" Exp ("and" identifier+ = Exp) " in " Exp
     | "fun" identifier* "->" Exp                // funkcja lambda
     | "match" Exp ("|" MExp "->" Exp)+ "endmatch"
+    | "if" Exp "then" Exp "else" Exp "endif
 
 TopLevelExp
     = Typedef ";;"
