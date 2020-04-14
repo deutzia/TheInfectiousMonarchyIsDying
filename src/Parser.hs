@@ -4,8 +4,6 @@ module Parser where
 writen based on: https://markkarpov.com/tutorial/megaparsec.html
 -}
 
-import Types
-
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import Data.Void
@@ -14,6 +12,8 @@ import qualified Text.Megaparsec.Char.Lexer as L
 import qualified Control.Monad.Combinators.Expr as E
 import qualified Data.Map.Lazy as M
 import Data.Either
+import Types
+import Primitives
 
 type Parser = Parsec Void String
 
@@ -61,21 +61,19 @@ AData DInt 3
 pLIdentifierString :: Parser String
 pLIdentifierString = do
     name <- lexeme $ (:) <$> lowerChar <*> many alphaNumChar
-    if elem name reserved
+    if name `elem` reserved
         then fail $ "keyword " ++ name ++ " cannot be used as an identifier"
         else return name
 
 -- lower case identifier
 pLIdentifier :: Parser AST
-pLIdentifier = do
-    name <- pLIdentifierString
-    return $ AVariable name
+pLIdentifier = AVariable <$> pLIdentifierString
 
 -- upper case identifier
 pUIdentifier :: Parser AST
 pUIdentifier = do
     name <- lexeme $ (:) <$> upperChar <*> many alphaNumChar
-    if elem name reserved
+    if name `elem` reserved
         then fail $ "keyword " ++ name ++ " cannot be used as an identifier"
         else return $ AVariable name
 
@@ -91,8 +89,7 @@ pLet = do
     rstring "let"
     vars <- sepBy pLetVar (symbol ";")
     rstring "in"
-    exp <- pExp
-    return $ ALet vars exp
+    ALet vars <$> pExp
 
 pLambda :: Parser AST
 pLambda = do
