@@ -25,7 +25,8 @@ runProgram prog env =
         helper l (Expr e) = do
             h <- eval e env
             return $ h : l
-    in foldM helper [] prog
+    -- reverse here, because foldM is like foldl, not foldr
+    in foldM helper [] $ reverse prog
 
 eval :: AST -> Env -> Except String Data
 eval (AData d) _ = return d
