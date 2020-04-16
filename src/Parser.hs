@@ -108,7 +108,7 @@ pIf = do
     rstring "else"
     e2 <- pExp
     rstring "endif"
-    return $ AIf cond e1 e2
+    return $ AFunApp (AFunApp (AFunApp (AData $ DPrim builtinIf) cond) e1) e2
 
 pParens :: Parser a -> Parser a
 pParens = between (symbol "(") (symbol ")")

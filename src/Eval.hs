@@ -41,15 +41,6 @@ eval (ALet l tree) env =
     let
         newenv = foldr (\(x, t) nenv -> M.insert x (eval t newenv) nenv) env l
     in eval tree newenv
-eval (AIf cond e1 e2) env =
-    let
-        condval = eval cond env
-        e1val = eval e1 env
-        e2val = eval e2 env
-    in
-        case condval of
-            DBool b -> if b then e1val else e2val
-            _ -> undefined
 
 {- | Basic eval tests
 >>> eval ( AData $ DInt 5 ) M.empty

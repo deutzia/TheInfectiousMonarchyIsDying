@@ -21,7 +21,6 @@ data AST
     | AFunApp AST AST
     | ALambda String AST
     | ALet [(String, AST)] AST
-    | AIf AST AST AST
     deriving Show
 
 data TopLevelExp

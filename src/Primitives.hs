@@ -100,6 +100,13 @@ builtinGe =
         helper _ = undefined
     in Primitive "builtinGe" 2 helper
 
+builtinIf :: Primitive
+builtinIf =
+    let
+        helper [DBool b, d1, d2] = if b then d1 else d2
+        helper _ = undefined
+    in Primitive "builtinIf" 3 helper
+
 {- | Primitives
 >>> eval ( AFunApp ( AFunApp (AData $DPrim builtinAdd) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
 DInt 4
