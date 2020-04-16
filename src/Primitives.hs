@@ -62,6 +62,7 @@ builtinEq :: Primitive
 builtinEq =
     let
         helper (DInt n : [DInt m]) = DBool (n == m)
+        helper (DBool b1 : [DBool b2]) = DBool (b1 == b2)
         helper _ = undefined
     in Primitive "builtinEq" 2 helper
 
@@ -69,6 +70,7 @@ builtinNeq :: Primitive
 builtinNeq =
     let
         helper (DInt n : [DInt m]) = DBool (n /= m)
+        helper (DBool b1 : [DBool b2]) = DBool (b1 /= b2)
         helper _ = undefined
     in Primitive "builtinNeq" 2 helper
 
