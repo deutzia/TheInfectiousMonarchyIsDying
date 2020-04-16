@@ -1,46 +1,66 @@
 module Eval where
 
+import Control.Monad.Except
 import qualified Data.Map.Lazy as M
 import Data.Maybe
 import Types
 
-prepareEnv :: Program -> Env
+prepareEnv :: Program -> Except String Env
 prepareEnv prog =
     let
-        helper :: TopLevelExp -> Env -> Env
-        helper (Expr _) env = env
-        helper (Def n t) env = M.insert n (eval t result) env
-        result = foldr helper M.empty prog
+        helper :: Env -> TopLevelExp -> Except String Env
+        helper env (Expr _) = return env
+        helper env (Def n t) = do
+            result_ <- result
+            toInsert <- eval t result_
+            return $ M.insert n toInsert env
+        result = foldM helper M.empty prog
     in result
 
-runProgram :: Program -> Env -> Result
+runProgram :: Program -> Env -> Except String Result
 runProgram prog env =
     let
-        helper :: TopLevelExp  -> [Data] -> [Data]
-        helper (Def _ _) l = l
-        helper (Expr e) l = eval e env : l
-    in foldr helper [] prog
+        helper :: Result -> TopLevelExp -> Except String Result
+        helper l (Def _ _) = return l
+        helper l (Expr e) = do
+            h <- eval e env
+            return $ h : l
+    in foldM helper [] prog
 
-eval :: AST -> Env -> Data
-eval (AData d) _ = d
-eval (AVariable var) env = fromJust $ M.lookup var env
-eval (AFunApp fun arg) env =
+eval :: AST -> Env -> Except String Data
+eval (AData d) _ = return d
+eval (AVariable var) env =
     let
-        argval = eval arg env
-        funval = eval fun env
+        maybeRes = M.lookup var env
     in
+        case maybeRes of
+            Nothing -> fail $ "invalid identifier: " ++ var
+            Just r -> return r
+eval (AFunApp fun arg) env =
+    do
+        argval <- eval arg env
+        funval <- eval fun env
         case funval of
             DFun name tree fenv -> eval tree (M.insert name argval fenv)
             DPrim (Primitive name n fun) ->
                 if n == 1
-                    then fun [argval]
-                    else DPrim (Primitive name (n-1) (\l -> fun (argval:l)))
-            _ -> undefined
-eval (ALambda name tree) env = DFun name tree env
+                    then return $ fun [argval]
+                    else return $DPrim (Primitive name (n-1) (\l -> fun (argval:l)))
+            _ -> fail $ "trying to apply someting that is not a function"
+eval (ALambda name tree) env = return $ DFun name tree env
 eval (ALet l tree) env =
     let
-        newenv = foldr (\(x, t) nenv -> M.insert x (eval t newenv) nenv) env l
-    in eval tree newenv
+        helper :: Env -> (String, AST) -> Except String Env
+--      helper nenv (x, t) = M.insert x (eval t newenv) nenv
+        helper nenv (x, t) = do
+            newenv_ <- newenv
+            toInsert <- eval t newenv_
+            return $ M.insert x toInsert nenv
+        newenv = foldM helper env l
+    in
+        do
+            newenv_ <- newenv
+            eval tree newenv_
 
 {- | Basic eval tests
 >>> eval ( AData $ DInt 5 ) M.empty
