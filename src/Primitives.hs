@@ -1,110 +1,187 @@
+{-# Options -Wall -Wname-shadowing #-}
 module Primitives where
 
+import Eval
 import Types
 
 builtinAdd :: Primitive
 builtinAdd =
     let
-        helper (DInt n : [DInt m]) = DInt (n + m)
-        helper _ = undefined
+        helper (d1 : [d2]) = do
+            u1 <- unlazy d1
+            u2 <- unlazy d2
+            case (u1, u2) of
+                (DInt n, DInt m) -> return $ DInt (n + m)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinAdd" 2 helper
 
 builtinSub :: Primitive
 builtinSub =
     let
-        helper (DInt n : [DInt m]) = DInt (n - m)
-        helper _ = undefined
+        helper (d1 : [d2]) = do
+            u1 <- unlazy d1
+            u2 <- unlazy d2
+            case (u1, u2) of
+                (DInt n, DInt m) -> return $ DInt (n - m)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinSub" 2 helper
 
 builtinMul :: Primitive
 builtinMul =
     let
-        helper (DInt n : [DInt m]) = DInt (n * m)
-        helper _ = undefined
+        helper (d1 : [d2]) = do
+            u1 <- unlazy d1
+            u2 <- unlazy d2
+            case (u1, u2) of
+                (DInt n, DInt m) -> return $ DInt (n * m)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinMul" 2 helper
 
 builtinDiv :: Primitive
 builtinDiv =
     let
-        helper (DInt n : [DInt m]) = DInt (n `div` m)
-        helper _ = undefined
+        helper (d1 : [d2]) = do
+            u1 <- unlazy d1
+            u2 <- unlazy d2
+            case (u1, u2) of
+                (DInt n, DInt m) -> return $ DInt (n `div` m)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinDiv" 2 helper
 
 builtinMod :: Primitive
 builtinMod =
     let
-        helper (DInt n : [DInt m]) = DInt (n `mod` m)
-        helper _ = undefined
+        helper (d1 : [d2]) = do
+            u1 <- unlazy d1
+            u2 <- unlazy d2
+            case (u1, u2) of
+                (DInt n, DInt m) -> return $ DInt (n `mod` m)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinMod" 2 helper
 
 builtinLand :: Primitive
 builtinLand =
     let
-        helper (DBool b1 : [DBool b2]) = DBool (b1 && b2)
-        helper _ = undefined
+        helper (d1 : [d2]) = do
+            u1 <- unlazy d1
+            u2 <- unlazy d2
+            case (u1, u2) of
+                (DBool b1, DBool b2) -> return $ DBool (b1 && b2)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinLand" 2 helper
 
 builtinLor :: Primitive
 builtinLor =
     let
-        helper (DBool b1 : [DBool b2]) = DBool (b1 || b2)
-        helper _ = undefined
+        helper (d1 : [d2]) = do
+            u1 <- unlazy d1
+            u2 <- unlazy d2
+            case (u1, u2) of
+                (DBool b1, DBool b2) -> return $ DBool (b1 || b2)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinLor" 2 helper
 
 builtinNeg :: Primitive
 builtinNeg =
     let
-        helper [DBool b] = DBool (not b)
-        helper _ = undefined
+        helper [d] = do
+            u <- unlazy d
+            case u of
+                (DBool b) -> return $ DBool (not b)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinNeg" 1 helper
 
 builtinEq :: Primitive
 builtinEq =
     let
-        helper (DInt n : [DInt m]) = DBool (n == m)
-        helper _ = undefined
+        helper (d1 : [d2]) = do
+            u1 <- unlazy d1
+            u2 <- unlazy d2
+            case (u1, u2) of
+                (DInt i1, DInt i2) -> return $ DBool (i1 == i2)
+                (DBool i1, DBool i2) -> return $ DBool (i1 == i2)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinEq" 2 helper
 
 builtinNeq :: Primitive
 builtinNeq =
     let
-        helper (DInt n : [DInt m]) = DBool (n /= m)
-        helper _ = undefined
+        helper (d1 : [d2]) = do
+            u1 <- unlazy d1
+            u2 <- unlazy d2
+            case (u1, u2) of
+                (DInt i1, DInt i2) -> return $ DBool (i1 /= i2)
+                (DBool i1, DBool i2) -> return $ DBool (i1 /= i2)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinNeq" 2 helper
 
 builtinLt :: Primitive
 builtinLt =
     let
-        helper (DInt n : [DInt m]) = DBool (n < m)
-        helper _ = undefined
+        helper (d1 : [d2]) = do
+            u1 <- unlazy d1
+            u2 <- unlazy d2
+            case (u1, u2) of
+                (DInt n, DInt m) -> return $ DBool (n < m)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinLt" 2 helper
 
 builtinLe :: Primitive
 builtinLe =
     let
-        helper (DInt n : [DInt m]) = DBool (n <= m)
-        helper _ = undefined
+        helper (d1 : [d2]) = do
+            u1 <- unlazy d1
+            u2 <- unlazy d2
+            case (u1, u2) of
+                (DInt n, DInt m) -> return $ DBool (n <= m)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinLe" 2 helper
 
 builtinGt :: Primitive
 builtinGt =
     let
-        helper (DInt n : [DInt m]) = DBool (n > m)
-        helper _ = undefined
+        helper (d1 : [d2]) = do
+            u1 <- unlazy d1
+            u2 <- unlazy d2
+            case (u1, u2) of
+                (DInt n, DInt m) -> return $ DBool (n > m)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinGt" 2 helper
 
 builtinGe :: Primitive
 builtinGe =
     let
-        helper (DInt n : [DInt m]) = DBool (n >= m)
-        helper _ = undefined
+        helper (d1 : [d2]) = do
+            u1 <- unlazy d1
+            u2 <- unlazy d2
+            case (u1, u2) of
+                (DInt n, DInt m) -> return $ DBool (n >= m)
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinGe" 2 helper
 
 builtinIf :: Primitive
 builtinIf =
     let
-        helper [DBool b, d1, d2] = if b then d1 else d2
-        helper _ = undefined
+        helper [d1, d2, d3] = do
+            ub <- unlazy d1
+            case ub of
+                (DBool b) -> return $ if b then d2 else d3
+                _ -> fail "types mismatch"
+        helper _ = fail "types mismatch"
     in Primitive "builtinIf" 3 helper
 
 {- | Primitives

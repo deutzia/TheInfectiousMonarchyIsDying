@@ -1,3 +1,4 @@
+{-# Options -Wall -Wname-shadowing #-}
 module Parser where
 
 {-
@@ -7,11 +8,8 @@ writen based on: https://markkarpov.com/tutorial/megaparsec.html
 import Text.Megaparsec
 import Text.Megaparsec.Char
 import Data.Void
-import Control.Monad
 import qualified Text.Megaparsec.Char.Lexer as L
 import qualified Control.Monad.Combinators.Expr as E
-import qualified Data.Map.Lazy as M
-import Data.Either
 import Types
 import Primitives
 
@@ -81,8 +79,8 @@ pLetVar :: Parser (String, AST)
 pLetVar = do
     name <- pLIdentifierString
     roperator "="
-    exp <- pExp
-    return (name, exp)
+    expr <- pExp
+    return (name, expr)
 
 pLet :: Parser AST
 pLet = do

@@ -1,22 +1,21 @@
+{-# Options -Wall -Wname-shadowing #-}
 module Main where
 
 import Control.Monad.Except
-import Data.Either
+import Control.Monad.State
 import Text.Megaparsec
-import Text.Megaparsec.Char
 import System.Environment
-import Data.Void
-import Control.Monad
+import qualified Data.Map.Lazy as M
 import Parser
 import Types
 import Eval
 
 exec :: Program -> Either String String
 exec program = do
-    env <- runExcept $ prepareEnv program
-    results <- runExcept $ runProgram program env
+    results <- evalState (runExceptT $ runProgram program) (M.empty, M.empty, 0)
     return $ concatMap printResult results
 
+main :: IO ()
 main = do
     argv <- getArgs
     contents <- if null argv then getContents else readFile $ head argv
@@ -24,10 +23,10 @@ main = do
         parseResult = runParser pProgram name contents
       in
       case parseResult of
-        Left error -> putStrLn $ errorBundlePretty error
+        Left err -> putStrLn $ errorBundlePretty err
         Right program -> let res = exec program
                          in
                          case res of
-                            Left error -> putStrLn $ "ERROR: " ++ error
+                            Left err -> putStrLn $ "ERROR: " ++ err
                             Right correct -> putStr correct
 

@@ -1,67 +1,133 @@
+{-# Options -Wall -Wname-shadowing #-}
+{-# Language FlexibleContexts #-}
 module Eval where
 
 import Control.Monad.Except
+import Control.Monad.State
 import qualified Data.Map.Lazy as M
 import Data.Maybe
 import Types
+import Debug.Trace
 
-prepareEnv :: Program -> Except String Env
+nextLoc :: MonadState Env m => m Loc
+nextLoc = state (\(rho, store, l) -> (l, (rho, store, l + 1)))
+
+lookUpStore :: MonadState Env m => Loc -> m (Maybe Data)
+lookUpStore loc = state (\(rho, store, l) -> (M.lookup loc store, (rho, store, l)))
+
+addStore :: MonadState Env m => Loc -> Data -> m ()
+addStore i d = state (\(rho, store, l) -> ((), (rho, M.insert i d store, l)))
+
+lookUpRho :: MonadState Env m => String -> m (Maybe Loc)
+lookUpRho name = state (\(rho, store, l) -> (M.lookup name rho, (rho, store, l)))
+
+addRho :: MonadState Env m => String -> Loc -> m ()
+addRho s i = state (\(rho, store, l) -> ((), (M.insert s i rho, store, l)))
+
+prepareEnv :: Program -> EvalM ()
 prepareEnv prog =
     let
-        helper :: Env -> TopLevelExp -> Except String Env
-        helper env (Expr _) = return env
-        helper env (Def n t) = do
-            result_ <- result
-            toInsert <- eval t result_
-            return $ M.insert n toInsert env
-        result = foldM helper M.empty prog
-    in result
+        helperRho :: TopLevelExp -> (Loc, Rho) -> (Loc, Rho)
+        helperRho (Expr _) env = env
+        helperRho (Def n _) (l, rho) = (l + 1, M.insert n l rho)
+        helperStore :: TopLevelExp -> (Rho, Store) -> (Rho, Store)
+        helperStore (Expr _) env = env
+        helperStore (Def n t) (rho, store) =
+            let
+                l = fromJust $ M.lookup n rho
+            in (rho, M.insert l (DLazyEval t rho) store)
+    in do
+        (rho, store, l) <- get
+        (newL, newRho) <- return $ foldr helperRho (l, rho) prog
+        (_, newStore) <- return $ foldr helperStore (newRho, store) prog
+        put (newRho, newStore, newL)
 
-runProgram :: Program -> Env -> Except String Result
-runProgram prog env =
+runProgram :: Program -> EvalM Result
+runProgram prog =
     let
-        helper :: Result -> TopLevelExp -> Except String Result
+        helper :: Result -> TopLevelExp -> EvalM Result
         helper l (Def _ _) = return l
         helper l (Expr e) = do
-            h <- eval e env
+            h <- eval e
             return $ h : l
     -- reverse here, because foldM is like foldl, not foldr
-    in foldM helper [] $ reverse prog
+    in do
+        prepareEnv prog
+        lazyResults <- foldM helper [] $ reverse prog
+        (rho, store, l) <- get
+        mapM unlazy lazyResults
 
-eval :: AST -> Env -> Except String Data
-eval (AData d) _ = return d
-eval (AVariable var) env =
-    let
-        maybeRes = M.lookup var env
-    in
-        case maybeRes of
-            Nothing -> fail $ "invalid identifier: " ++ var
-            Just r -> return r
-eval (AFunApp fun arg) env =
+eval :: AST -> EvalM Data
+eval (AData d) = return d
+eval (AVariable var) = do
+    maybeRes <- lookUpRho var
+    case maybeRes of
+        Nothing -> fail $ "invalid identifier: " ++ var
+        Just r -> return $ DReference r
+eval (AFunApp fun arg) =
     do
-        argval <- eval arg env
-        funval <- eval fun env
-        case funval of
-            DFun name tree fenv -> eval tree (M.insert name argval fenv)
-            DPrim (Primitive name n fun) ->
-                if n == 1
-                    then return $ fun [argval]
-                    else return $DPrim (Primitive name (n-1) (\l -> fun (argval:l)))
-            _ -> fail $ "trying to apply someting that is not a function"
-eval (ALambda name tree) env = return $ DFun name tree env
-eval (ALet l tree) env =
+        argval <- eval arg
+        funval <- eval fun
+        result <- nextLoc
+        addStore result (DLazyApp funval argval)
+        return $ DReference result
+eval (ALambda name tree) = do
+    (rho, _, _) <- get
+    return $ DFun name tree rho
+eval (ALet decls tree) =
     let
-        helper :: Env -> (String, AST) -> Except String Env
---      helper nenv (x, t) = M.insert x (eval t newenv) nenv
-        helper nenv (x, t) = do
-            newenv_ <- newenv
-            toInsert <- eval t newenv_
-            return $ M.insert x toInsert nenv
-        newenv = foldM helper env l
-    in
-        do
-            newenv_ <- newenv
-            eval tree newenv_
+        helperRho :: (String, AST) -> (Loc, Rho) -> (Loc, Rho)
+        helperRho (name, _) (l, rho) = (l + 1, M.insert name l rho)
+        helperStore :: (String, AST) -> (Rho, Store) -> (Rho, Store)
+        helperStore (name, t) (rho, store) =
+            let
+                l = fromJust $ M.lookup name rho
+            in (rho, M.insert l (DLazyEval t rho) store)
+    in do
+        (rho, store, l) <- get
+        (newL, newRho) <- return $ foldr helperRho (l, rho) decls
+        (_, newStore) <- return $ foldr helperStore (newRho, store) decls
+        put (rho, newStore, newL)
+        l_ <- nextLoc
+        addStore l_ $ DLazyEval tree newRho
+        return $ DReference l
+
+unlazy :: Data -> EvalM Data
+unlazy (DLazyApp fun arg) = do
+    funval <- unlazy fun
+    case funval of
+        DFun name tree fRho -> do
+            l <- nextLoc
+            addStore l arg
+            (rho, store, l_) <- get
+            put (M.insert name l fRho, store, l_)
+            result <- unlazy =<< eval tree
+            (_, newStore, newL) <- get
+            put (rho, newStore, newL)
+            return result
+        DPrim (Primitive name n f) ->
+            if n == 1
+                then unlazy =<< f [arg]
+                else return $ DPrim (Primitive name (n-1) (\l -> f (arg:l)))
+        _ -> fail "trying to apply someting that is not a function"
+unlazy (DLazyEval tree eRho) = do
+    (rho, store, l) <- get
+    put (eRho, store, l)
+    result <- unlazy =<< eval tree
+    (_, newStore, newL) <- get
+    put (rho, newStore, newL)
+    return result
+unlazy (DReference loc) = do
+    maybeData <- lookUpStore loc
+    addStore loc DUndefined
+    value <- case maybeData of
+        Nothing -> fail "undefined reference"
+        Just d -> return d
+    result <- unlazy value
+    addStore loc result
+    return result
+unlazy DUndefined = fail "unsolvable loop"
+unlazy a = return a
 
 {- | Basic eval tests
 >>> eval ( AData $ DInt 5 ) M.empty
