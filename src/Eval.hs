@@ -7,7 +7,6 @@ import Control.Monad.State
 import qualified Data.Map.Lazy as M
 import Data.Maybe
 import Types
-import Debug.Trace
 
 nextLoc :: MonadState Env m => m Loc
 nextLoc = state (\(rho, store, l) -> (l, (rho, store, l + 1)))
@@ -54,7 +53,6 @@ runProgram prog =
     in do
         prepareEnv prog
         lazyResults <- foldM helper [] $ reverse prog
-        (rho, store, l) <- get
         mapM unlazy lazyResults
 
 eval :: AST -> EvalM Data
