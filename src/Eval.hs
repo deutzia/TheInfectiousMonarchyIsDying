@@ -103,10 +103,10 @@ unlazy (DLazyApp fun arg) = do
             (_, newStore, newL) <- get
             put (rho, newStore, newL)
             return result
-        DPrim (Primitive name n f) ->
+        DPrim (Primitive name (TFun _ t) n f) ->
             if n == 1
                 then unlazy =<< f [arg]
-                else return $ DPrim (Primitive name (n-1) (\l -> f (arg:l)))
+                else return $ DPrim (Primitive name t (n-1) (\l -> f (arg:l)))
         _ -> fail "trying to apply someting that is not a function"
 unlazy (DLazyEval tree eRho) = do
     (rho, store, l) <- get
