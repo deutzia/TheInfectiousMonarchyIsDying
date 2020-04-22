@@ -73,9 +73,14 @@ builtinLand =
     let
         helper (d1 : [d2]) = do
             u1 <- unlazy d1
-            u2 <- unlazy d2
-            case (u1, u2) of
-                (DBool b1, DBool b2) -> return $ DBool (b1 && b2)
+            case u1 of
+                DBool b1 -> if b1
+                    then do
+                        u2 <- unlazy d2
+                        case u2 of
+                            DBool b2 -> return $ DBool b2
+                            _ -> fail "types mismatch"
+                    else return $ DBool False
                 _ -> fail "types mismatch"
         helper _ = fail "types mismatch"
     in Primitive "builtinLand" 2 helper
@@ -85,9 +90,14 @@ builtinLor =
     let
         helper (d1 : [d2]) = do
             u1 <- unlazy d1
-            u2 <- unlazy d2
-            case (u1, u2) of
-                (DBool b1, DBool b2) -> return $ DBool (b1 || b2)
+            case u1 of
+                DBool b1 -> if not b1
+                    then do
+                        u2 <- unlazy d2
+                        case u2 of
+                            DBool b2 -> return $ DBool b2
+                            _ -> fail "types mismatch"
+                    else return $ DBool True
                 _ -> fail "types mismatch"
         helper _ = fail "types mismatch"
     in Primitive "builtinLor" 2 helper
