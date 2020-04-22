@@ -47,7 +47,9 @@ builtinDiv =
             u1 <- unlazy d1
             u2 <- unlazy d2
             case (u1, u2) of
-                (DInt n, DInt m) -> return $ DInt (n `div` m)
+                (DInt n, DInt m) -> if m == 0
+                    then fail "division by zero"
+                    else return $ DInt (n `div` m)
                 _ -> fail "types mismatch"
         helper _ = fail "types mismatch"
     in Primitive "builtinDiv" 2 helper
@@ -59,7 +61,9 @@ builtinMod =
             u1 <- unlazy d1
             u2 <- unlazy d2
             case (u1, u2) of
-                (DInt n, DInt m) -> return $ DInt (n `mod` m)
+                (DInt n, DInt m) -> if m == 0
+                    then fail "modulo by zero"
+                    else return $ DInt (n `mod` m)
                 _ -> fail "types mismatch"
         helper _ = fail "types mismatch"
     in Primitive "builtinMod" 2 helper
