@@ -88,7 +88,7 @@ eval (ALet decls tree) =
         put (rho, newStore, newL)
         l_ <- nextLoc
         addStore l_ $ DLazyEval tree newRho
-        return $ DReference l
+        return $ DReference l_
 
 unlazy :: Data -> EvalM Data
 unlazy (DLazyApp fun arg) = do
