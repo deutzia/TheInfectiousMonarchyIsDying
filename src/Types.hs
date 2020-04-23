@@ -1,6 +1,7 @@
 {-# Options -Wall -Wname-shadowing #-}
 module Types where
 
+import qualified Data.Graph as G
 import qualified Data.Map.Lazy as M
 import qualified Data.Set as S
 import Control.Monad.Except
@@ -34,7 +35,6 @@ instance Show Data where
     show (DReference loc) = "DReference " ++ show loc
     show DUndefined = "DUndefined"
 
--- data Primitive = Primitive String Int ([Data] -> EvalM Data)
 data Primitive = Primitive String Type Int ([Data] -> EvalM Data)
 
 -- abstract syntax tree
@@ -75,4 +75,30 @@ data Type    =  TVariable String
              |  TBool
              |  TFun Type Type
              deriving (Eq, Ord)
+
+-- order clauses in let so that ones that don't depend on the others are
+-- ressolved first
+-- for whatever reason strongly connected components are already implemented
+-- https://hackage.haskell.org/package/containers-0.6.2.1/docs/Data-Graph.html#g:7
+-- so I may actually finish this on time
+orderLet :: AST -> AST
+orderLet (ALet l tree) =
+    let
+        vars = map (\(name, _) -> name) l
+        graph = map (\(name, t) -> ((name, t), name, filter (\v -> v `S.member` getVars t) vars)) l
+        scc = map G.flattenSCC $ G.stronglyConnComp graph
+    in foldr ALet tree scc
+orderLet _ = undefined
+
+getVars :: AST -> S.Set String
+getVars (AData _) = S.empty
+getVars (AVariable name) = S.singleton name
+getVars (AFunApp t1 t2) = getVars t1 `S.union` getVars t2
+getVars (ALambda name t) = name `S.delete` getVars t
+getVars (ALet l tree) =
+    let
+        treeVars = getVars tree
+        vars = S.fromList $ map (\(name, _) -> name) l
+        expVars = S.unions $ map (\(_, t) -> getVars t) l
+    in (treeVars `S.union` expVars) `S.difference` vars
 
