@@ -201,7 +201,7 @@ builtinIf =
                 (DBool b) -> return $ if b then d2 else d3
                 _ -> fail "types mismatch"
         helper _ = fail "types mismatch"
-    in Primitive "builtinIf" (TFun TBool $ TFun (TVariable "a") (TVariable "a")) 3 helper
+    in Primitive "builtinIf" (TFun TBool $ TFun (TVariable "a") $ TFun (TVariable "a") (TVariable "a")) 3 helper
 
 {- | Primitives
 >>> eval ( AFunApp ( AFunApp (AData $DPrim builtinAdd) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty

@@ -4,6 +4,7 @@ module Eval where
 
 import Control.Monad.Except
 import Control.Monad.State
+import Control.Monad.Reader
 import qualified Data.Map.Lazy as M
 import Data.Maybe
 import Types
@@ -49,11 +50,15 @@ runProgram prog =
         helper l (Expr e) = do
             h <- eval e
             return $ h : l
-    -- reverse here, because foldM is like foldl, not foldr
     in do
-        prepareEnv prog
-        lazyResults <- foldM helper [] $ reverse prog
-        mapM unlazy lazyResults
+        let res = evalState (runReaderT (runExceptT $ typeCheck prog) TIEnv) 0
+        case res of
+            Left err -> fail $ "typecheck failed: " ++ err
+            Right _ -> do
+                prepareEnv prog
+                -- reverse here, because foldM is like foldl, not foldr
+                lazyResults <- foldM helper [] $ reverse prog
+                mapM unlazy lazyResults
 
 eval :: AST -> EvalM Data
 eval (AData d) = return d
