@@ -65,10 +65,6 @@ printResult (DLazyEval _ _) = "LazyEval\n"
 printResult (DReference n) = "Reference " ++ show n  ++ "\n"
 printResult DUndefined = "Undefined\n"
 
-addToEnv :: Env -> String -> Data -> Env
-addToEnv (rho, s, l) name d =
-    (M.insert name l rho, M.insert l d s, l + 1)
-
 {- typecheck written based on http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.65.7733&rep=rep1&type=pdf -}
 
 data Type
