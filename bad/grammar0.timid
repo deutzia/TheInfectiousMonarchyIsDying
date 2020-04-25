@@ -1,0 +1,2 @@
+/- keyword as a variable name
+def let = 5 ;;

@@ -1,0 +1,2 @@
+/- different types in branches of if
+if True then 5 else False endif ;;

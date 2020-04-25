@@ -1,0 +1,2 @@
+/- int in if condition
+if 0 then 5 + 5 else 6 endif ;;

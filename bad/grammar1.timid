@@ -1,0 +1,2 @@
+/- missing keyword in if
+if 2 < 3 then 5 + 5 else 6 ;;

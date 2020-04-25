@@ -1,0 +1,11 @@
+/- polymorphic if
+
+if True then False else True endif ;;
+
+if False then 5 else 3 endif ;;
+
+let
+    f1 = fun x -> x ;
+    f2 = fun x -> x * x
+in (if False then f1 else f2 endif) . 5 ;;
+

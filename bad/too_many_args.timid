@@ -1,0 +1,2 @@
+def fib n = if n < 2 then 1 else n + fib . (n - 1) endif ;;
+fib . 3 . 4 ;;

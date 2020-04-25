@@ -1,0 +1,8 @@
+def x = 3 ;;
+
+def f y = x + y ;;
+
+/- if the bining was dynamic, the value would be 10
+let
+    x = 5
+in f . x ;;

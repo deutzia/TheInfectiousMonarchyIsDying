@@ -1,0 +1,4 @@
+def x = 0 ;;
+def b = True ;;
+x ;;
+b ;;
