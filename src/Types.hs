@@ -201,18 +201,24 @@ varBind u t | t == TVariable u = return nullSubst
             | u `S.member` ftv t = fail $ "occurs check fails: " ++ u ++ " vs. " ++ show t
             | otherwise = return (M.singleton u t)
 
-genNewVars :: Type -> TypeM Type
-genNewVars (TVariable _) = do
-    tv <- newTyVar "var"
-    return tv
-genNewVars (TFun t1 t2) = do
-    t1' <- genNewVars t1
-    t2' <- genNewVars t2
-    return $ TFun t1' t2'
-genNewVars (TAlgebraic name types) = do
-    types' <- mapM genNewVars types
-    return $ TAlgebraic name types'
-genNewVars t = return t
+type VarMap = M.Map String Type
+genNewVars :: VarMap -> Type -> TypeM (VarMap, Type)
+genNewVars m (TVariable v) = do
+    case M.lookup v m of
+        Nothing -> do
+            tv <- newTyVar "var"
+            return (M.insert v tv m, tv)
+        Just tv -> return (m, tv)
+genNewVars m (TFun t1 t2) = do
+    (m', t1') <- genNewVars m t1
+    (m'', t2') <- genNewVars m' t2
+    return (m'', TFun t1' t2')
+genNewVars m (TAlgebraic name types) = do
+    (m', types') <- foldM (\(newM, acc) ty -> do
+            (newM', ty') <- genNewVars newM ty
+            return (newM', ty' : acc)) (m, []) $ reverse types
+    return (m', TAlgebraic name types')
+genNewVars m t = return (m, t)
 
 -- type inference implementation
 ti :: TypeEnv -> AST -> TypeM (Subst, Type)
@@ -222,7 +228,7 @@ ti _ (AData l) = case l of
     -- primitives can be polymorphic, so we have to return different types every
     -- time for free variables in the primitive type
     DPrim (Primitive _ t _ _) -> do
-        newT <- genNewVars t
+        (_, newT) <- genNewVars M.empty t
         return (nullSubst, newT)
     _ -> undefined
 ti env (AVariable n) =
