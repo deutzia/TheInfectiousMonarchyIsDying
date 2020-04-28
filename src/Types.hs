@@ -9,7 +9,7 @@ import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.Reader
 import Data.Maybe
-
+import Debug.Trace
 type Loc = Int
 type Rho = M.Map String Loc
 type Store = M.Map Loc Data
@@ -25,6 +25,7 @@ data Data
     | DLazyEval AST Rho
     | DReference Loc
     | DUndefined
+    | DAlgebraic String [Data]
 
 instance Show Data where
     show (DInt n) = "DInt " ++ show n
@@ -35,6 +36,7 @@ instance Show Data where
     show (DLazyEval tree rho) = "DLazyEval " ++ show tree ++ " " ++ show rho
     show (DReference loc) = "DReference " ++ show loc
     show DUndefined = "DUndefined"
+    show (DAlgebraic name types) = "DAlgebraic " ++ show name ++ foldr (\d s -> " " ++ show d ++ s) "" types
 
 data Primitive = Primitive String Type Int ([Data] -> EvalM Data)
 
@@ -45,25 +47,31 @@ data AST
     | AFunApp AST AST
     | ALambda String AST
     | ALet [(String, AST)] AST
+    | AMatch AST [(String, [String], AST)]
     deriving Show
 
 data TopLevelExp
     = Def String AST
     | Expr AST
-    deriving Show
+    | Algebraic String Int [Primitive] Primitive -- name, number of free vars, constructors, match
+--    deriving Show
 
 type Program = [TopLevelExp]
 type Result = [Data]
 
+printResultHelper :: Data -> String
+printResultHelper (DInt n) = show n
+printResultHelper (DBool b) = show b
+printResultHelper (DFun _ _ _) = "function"
+printResultHelper (DPrim (Primitive name _ _ _)) = name
+printResultHelper (DLazyApp _ _) = "LazyApp"
+printResultHelper (DLazyEval _ _) = "LazyEval"
+printResultHelper (DReference n) = "Reference " ++ show n
+printResultHelper DUndefined = "Undefined"
+printResultHelper (DAlgebraic name types) = name ++ foldr (\d s -> " (" ++ printResultHelper d ++ ")" ++ s) "" types
+
 printResult :: Data -> String
-printResult (DInt n) = show n ++ "\n"
-printResult (DBool b) = show b ++ "\n"
-printResult (DFun _ _ _) = "function\n"
-printResult (DPrim (Primitive name _ _ _)) = name ++ "\n"
-printResult (DLazyApp _ _) = "LazyApp\n"
-printResult (DLazyEval _ _) = "LazyEval\n"
-printResult (DReference n) = "Reference " ++ show n  ++ "\n"
-printResult DUndefined = "Undefined\n"
+printResult d = (printResultHelper d ++ "\n")
 
 {- typecheck written based on http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.65.7733&rep=rep1&type=pdf -}
 
@@ -72,6 +80,7 @@ data Type
     | TInt
     | TBool
     | TFun Type Type
+    | TAlgebraic String [Type]
     deriving (Eq, Ord, Show)
 
 -- order clauses in let so that ones that don't depend on the others are
@@ -99,8 +108,9 @@ getVars (ALet l tree) =
         vars = S.fromList $ map fst l
         expVars = S.unions $ map (\(_, t) -> getVars t) l
     in (treeVars `S.union` expVars) `S.difference` vars
+getVars (AMatch e l) = getVars e `S.union` (S.unions $ map (\(_, vars, tree) -> getVars tree `S.difference` (S.fromList vars)) l)
 
-data Scheme  =  Scheme [String] Type
+data Scheme  =  Scheme [String] Type deriving Show
 
 class Types a where
     -- free type variables
@@ -112,6 +122,7 @@ instance Types Type where
     ftv TInt = S.empty
     ftv TBool = S.empty
     ftv (TFun t1 t2) = ftv t1 `S.union` ftv t2
+    ftv (TAlgebraic _ types) = S.unions $ map (\t -> ftv t) types
 
     apply s (TVariable n) = fromMaybe (TVariable n) (M.lookup n s)
     apply s (TFun t1 t2) = TFun (apply s t1) (apply s t2)
@@ -155,11 +166,11 @@ type TypeM = ExceptT String (ReaderT TIEnv (State Int))
 newTyVar :: String -> TypeM Type
 newTyVar prefix = do
     s <- state (\n -> (n, n + 1))
-    return $ TVariable $ prefix ++ show s
+    return $ TVariable $ "__" ++ prefix ++ show s
 
 instantiate :: Scheme -> TypeM Type
 instantiate (Scheme vars t) = do
-    nvars <- mapM (\ _ -> newTyVar "a") vars
+    nvars <- mapM (\ _ -> newTyVar "scheme") vars
     let s = M.fromList (zip vars nvars)
     return $ apply s t
 
@@ -173,6 +184,16 @@ mgu (TVariable u) t = varBind u t
 mgu t (TVariable u) = varBind u t
 mgu TInt TInt = return nullSubst
 mgu TBool TBool = return nullSubst
+mgu t1@(TAlgebraic n1 l1) t2@(TAlgebraic n2 l2) = do
+    if (n1 /= n2) || (length l1 /= length l2)
+        then fail $ "types do not unify: " ++ show t1 ++ " vs. " ++ show t2
+        else foldM
+            (\s (t, t') -> do
+                sub <- mgu (apply s t) (apply s t')
+                return (s `compose` sub)
+            )
+            nullSubst
+            (zip l1 l2)
 mgu t1 t2 = fail $ "types do not unify: " ++ show t1 ++ " vs. " ++ show t2
 
 varBind :: String -> Type -> TypeM Subst
@@ -180,12 +201,29 @@ varBind u t | t == TVariable u = return nullSubst
             | u `S.member` ftv t = fail $ "occurs check fails: " ++ u ++ " vs. " ++ show t
             | otherwise = return (M.singleton u t)
 
+genNewVars :: Type -> TypeM Type
+genNewVars (TVariable _) = do
+    tv <- newTyVar "var"
+    return tv
+genNewVars (TFun t1 t2) = do
+    t1' <- genNewVars t1
+    t2' <- genNewVars t2
+    return $ TFun t1' t2'
+genNewVars (TAlgebraic name types) = do
+    types' <- mapM genNewVars types
+    return $ TAlgebraic name types'
+genNewVars t = return t
+
 -- type inference implementation
 ti :: TypeEnv -> AST -> TypeM (Subst, Type)
 ti _ (AData l) = case l of
     DInt _ -> return (nullSubst, TInt)
     DBool _ -> return (nullSubst, TBool)
-    DPrim (Primitive _ t _ _) -> return (nullSubst, t)
+    -- primitives can be polymorphic, so we have to return different types every
+    -- time for free variables in the primitive type
+    DPrim (Primitive _ t _ _) -> do
+        newT <- genNewVars t
+        return (nullSubst, newT)
     _ -> undefined
 ti env (AVariable n) =
     case M.lookup n env of
@@ -194,14 +232,13 @@ ti env (AVariable n) =
             t <- instantiate sigma
             return (nullSubst, t)
 ti env (AFunApp e1 e2) = do
-    tv <- newTyVar "a"
+    tv <- newTyVar "retval"
     (s1, t1) <- ti env e1
     (s2, t2) <- ti (apply s1 env) e2
---    traceM $ "e1 = " ++ show e1 ++ " e2 = " ++ show e2
     s3 <- mgu (apply s2 t1) (TFun t2 tv)
     return (s3 `compose` s2 `compose` s1, apply s3 tv)
 ti env (ALambda n e) = do
-    tv <- newTyVar "a"
+    tv <- newTyVar "arg"
     let env' = M.insert n (Scheme [] tv) env
     (s1, t1) <- ti env' e
     return (s1, TFun (apply s1 tv) t1)
@@ -213,6 +250,7 @@ ti env let_@(ALet _ _) = do
             (sx, tx) <- ti new tree
             return (sx `compose` sub, tx)
         _ -> undefined
+ti _ _ = undefined -- return (nullSubst, TInt)
 
 -- prepare env and susbstitutions needed for parsing let-clauses and for
 -- preparing type environment (since global definitions are like a bunch of
@@ -222,7 +260,7 @@ helperLetEnv env l =
     let
         helperInsert :: TypeEnv -> (String, AST) -> TypeM TypeEnv
         helperInsert e (n, _) = do
-            tv <- newTyVar "a"
+            tv <- newTyVar "letexp"
             return $ M.insert n (Scheme [] tv) e
         helperInfer :: (Subst, TypeEnv) -> (String, AST) -> TypeM (Subst, TypeEnv)
         helperInfer (sub, e) (n, tree) = do
@@ -249,19 +287,30 @@ getClauses =
         helper :: TopLevelExp -> [(String, AST)] -> [(String, AST)]
         helper (Expr _) l = l
         helper (Def n t) l = (n, t) : l
+        helper (Algebraic _ _ _ _) l = l
     in foldr helper []
 
 typeCheck :: Program -> TypeM ()
 typeCheck prog =
     let
         clauses = getClauses prog
+        helperEnv :: TypeEnv -> TopLevelExp -> TypeEnv
+        helperEnv e (Def _ _) = e
+        helperEnv e (Expr _) = e
+        helperEnv e (Algebraic _ _ prims (Primitive mName mT _ _)) = do
+            let e' = M.insert mName (generalize e mT) e
+            foldl (\env (Primitive name t _ _) -> M.insert name (generalize env t) env) e' prims
         helper :: TypeEnv -> TopLevelExp -> TypeM TypeEnv
         helper e (Def _ _) = return e
         helper e (Expr tree) = do
+            traceM $ show tree
             (_, _) <- ti e tree
             return e
+        helper e (Algebraic _ _ _ _) = return e
+        initialEnv = foldl helperEnv M.empty prog
     in
         do
-            (env, sub) <- helperLetEnv M.empty clauses
+            (env, sub) <- helperLetEnv initialEnv clauses
+            traceM $ show (apply sub env)
             foldM_ helper (apply sub env) prog
 

@@ -9,6 +9,7 @@ import qualified Data.Map.Lazy as M
 import Parser
 import Types
 import Eval
+import Debug.Trace
 
 exec :: Program -> Either String String
 exec program = do

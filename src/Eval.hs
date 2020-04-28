@@ -30,12 +30,28 @@ prepareEnv prog =
         helperRho :: TopLevelExp -> (Loc, Rho) -> (Loc, Rho)
         helperRho (Expr _) env = env
         helperRho (Def n _) (l, rho) = (l + 1, M.insert n l rho)
+        helperRho (Algebraic _ _ prims (Primitive matchName _ _ _)) (l, rho) = foldl
+            (\(l', rho') (Primitive name _ _ _) -> (l' + 1, M.insert name l' rho'))
+            (l + 1, M.insert matchName l rho)
+            prims
         helperStore :: TopLevelExp -> (Rho, Store) -> (Rho, Store)
         helperStore (Expr _) env = env
         helperStore (Def n t) (rho, store) =
             let
                 l = fromJust $ M.lookup n rho
             in (rho, M.insert l (DLazyEval t rho) store)
+        helperStore (Algebraic _ _ prims match@(Primitive matchName _ _ _)) (rho, store) =
+            let
+                matchL = fromJust $ M.lookup matchName rho
+            in
+                foldl
+                    (\(rho', store') p@(Primitive name _ _ _) ->
+                    let
+                        l = fromJust $ M.lookup name rho'
+                    in (rho', M.insert l (DPrim p) store')
+                )
+                (rho, M.insert matchL (DPrim match) store)
+                prims
     in do
         (rho, store, l) <- get
         (newL, newRho) <- return $ foldr helperRho (l, rho) prog
@@ -50,6 +66,7 @@ runProgram prog =
         helper l (Expr e) = do
             h <- eval e
             return $ h : l
+        helper l (Algebraic _ _ _ _) = return l
     in do
         let res = evalState (runReaderT (runExceptT $ typeCheck prog) TIEnv) 0
         case res of
@@ -94,6 +111,7 @@ eval (ALet decls tree) =
         l_ <- nextLoc
         addStore l_ $ DLazyEval tree newRho
         return $ DReference l_
+eval _ = undefined -- match is not passed to eval
 
 unlazy :: Data -> EvalM Data
 unlazy (DLazyApp fun arg) = do
@@ -130,6 +148,10 @@ unlazy (DReference loc) = do
     addStore loc result
     return result
 unlazy DUndefined = fail "unsolvable loop"
+unlazy (DAlgebraic name elems) = do
+    unlaziedElems <- mapM unlazy elems
+    return $ DAlgebraic name unlaziedElems
+unlazy (DPrim (Primitive _ _ 0 f)) = f []
 unlazy a = return a
 
 {- | Basic eval tests
