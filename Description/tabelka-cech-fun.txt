@@ -11,21 +11,19 @@ Listy:
 09 (lukier) unlikely, ale jesli będę mieć czas
 Na 25 punktów
 10 (listy dowolnego typu, zagnieżdżone i listy funkcji) +
-11 (proste typy algebraiczne z jednopoziomowym pattern matchingiem) +
++ 11 (proste typy algebraiczne z jednopoziomowym pattern matchingiem) +
 + 12 (statyczne wiązanie identyfikatorów) +
 + 13 (statyczne typowanie) +
 Na 30 punkty
-14 (ogólne polimorficzne i rekurencyjne typy algebraiczne) +
-15 (zagnieżdżony pattern matching, test kompletności) +
++ 14 (ogólne polimorficzne i rekurencyjne typy algebraiczne) +
++ 15 (zagnieżdżony pattern matching, test kompletności) +
 Bonus
-16 (typy polimorficzne z algorytmem rekonstrukcji typów) + jeśli będę mieć
++ 16 (typy polimorficzne z algorytmem rekonstrukcji typów) + jeśli będę mieć
 czas (to ma priorytet)
 
 Razem: 30+
 
 TODO
-* ADT (11, 14, 16)
-* match (11, 15)
 * listy lukier (07, 08, 09, 10)
 * eval w monadzie reader
 * pretty printing
