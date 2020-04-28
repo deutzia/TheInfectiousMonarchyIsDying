@@ -1,0 +1,11 @@
+typedef Maybe a = Just a | Nothing ;;
+typedef Either a b = Left a | Right b ;;
+
+def f x =
+    match x
+        | Just a -> True
+        | Nothing -> False
+        | Left b -> False
+        | Right c -> True
+    endmatch
+;;

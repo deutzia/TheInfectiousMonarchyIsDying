@@ -1,0 +1,8 @@
+typedef Maybe a = Just a | Nothing ;;
+
+def f x =
+    match x
+        | Just a -> a
+    endmatch
+;;
+

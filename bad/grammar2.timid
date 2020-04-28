@@ -1,0 +1,2 @@
+/- incorrect typedef
+typedef T = a | b ;;
