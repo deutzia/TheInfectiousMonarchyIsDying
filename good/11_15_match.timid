@@ -1,0 +1,69 @@
+typedef Maybe a = Just a | Nothing ;;
+
+def isJust = fun x ->
+    match x
+        | Just n -> True
+        | Nothing -> False
+    endmatch
+;;
+
+typedef Either a b = Left a | Right b ;;
+
+def isLeft = fun x ->
+    match x
+        | Left l -> True
+        | Right r -> False
+    endmatch
+;;
+
+typedef List a = Empty | Nonempty a (List a) ;;
+
+def head l =
+    match l
+        | Empty -> Nothing
+        | Nonempty h t -> Just . h
+    endmatch
+;;
+
+def tail l =
+    match l
+        | Empty -> Nothing
+        | Nonempty h t -> Just . t
+    endmatch
+;;
+
+def isEmpty l =
+    match l
+        | Empty -> True
+        | Nonempty h t -> False
+    endmatch
+;;
+
+def x = Just . 5 ;;
+def y = Nothing ;;
+
+isJust . x ;;
+isJust . Nothing;;
+
+isLeft . (Left . 3) ;;
+isLeft . (Right . Nothing) ;;
+
+def l = Nonempty . 3 . (Nonempty . 4 . Empty) ;;
+
+isEmpty . l;;
+isEmpty . Empty;;
+
+def nested x =
+    match x
+        | Left list ->
+            match list
+                | Empty -> 1
+                | Nonempty h t -> 2
+            endmatch
+        | Right m -> 3
+    endmatch
+;;
+
+nested . (Right . 5) ;;
+nested . (Left . l );;
+nested . (Left . Empty);;

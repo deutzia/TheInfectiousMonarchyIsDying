@@ -1,0 +1,33 @@
+typedef Maybe a = Just a | Nothing ;;
+typedef Either a b = Left a | Right b ;;
+
+def f1 b x = if b then (Just . x) else Nothing endif ;;
+f1 . True . 5 ;;
+
+def f2 b1 b2 valLeft valRight =
+    if b1
+    then
+        if b2
+            then Just . (Left . valLeft)
+            else Just . (Right . valRight)
+        endif
+    else
+        Nothing
+    endif
+;;
+
+f2 . True . True . 5 . 3 ;;
+f2 . True . False . 5 . 3 ;;
+f2 . False . True . 5 . 5 ;;
+
+typedef Tree a = Leaf a | Node (Tree a) (Tree a);;
+
+def f3 n x =
+    if n == 0 || n == 1
+    then Leaf . x
+    else
+        Node . (f3 . (n - 1) . (2 * x)) . (f3 . (n - 2) . (2 * x + 1))
+    endif
+;;
+
+f3 . 2 . 1 ;;
