@@ -45,6 +45,13 @@ rstring s = try $ string s *> notFollowedBy (alphaNumChar <|> char '_') *> sc
 roperator :: String -> Parser ()
 roperator s = try $ string s *> notFollowedBy (oneOf "=-+*/\\<>!%&|~;") *> sc
 
+-- fail if any element appear on the list more than once
+unique :: [String] -> Parser ()
+unique l = foldM_ (\acc e ->
+    if S.member e acc
+        then fail $ show e ++ " appears more than once in a declaration"
+        else return $ S.insert e acc) S.empty l
+
 -- Expression parsers
 pBool :: Parser AST
 pBool = do
@@ -98,6 +105,7 @@ pLet = do
     rstring "let"
     -- at least one thing should be defined inside of an if
     vars <- sepBy1 pLetVar (symbol ";")
+    unique $ map fst vars
     rstring "in"
     ALet vars <$> pExp
 
@@ -105,6 +113,7 @@ pLambda :: Parser AST
 pLambda = do
     rstring "fun"
     vars <- try (some pLIdentifierString)
+    unique vars
     roperator "->"
     body <- pExp
     return $ foldr ALambda body vars
@@ -125,6 +134,7 @@ pMexp = do
     roperator "|"
     name <- pUIdentifierString
     vars <- many pLIdentifierString
+    unique vars
     roperator "->"
     e <- pExp
     return (name, vars, foldr ALambda e vars)
@@ -134,6 +144,7 @@ pMatch = do
     rstring "match"
     e <- pExp
     clauses <- some (pMexp)
+    unique $ map (\(n, _, _) -> n) clauses
     rstring "endmatch"
     return $ AMatch e clauses
 
@@ -182,10 +193,10 @@ operatorTable =
   ]
 
 binary :: String -> (AST -> AST -> AST) -> E.Operator Parser AST
-binary  name f = E.InfixL  (f <$ symbol name)
+binary name f = E.InfixL  (f <$ symbol name)
 
 prefix, postfix :: String -> (AST -> AST) -> E.Operator Parser AST
-prefix  name f = E.Prefix  (f <$ symbol name)
+prefix name f = E.Prefix  (f <$ symbol name)
 postfix name f = E.Postfix (f <$ symbol name)
 
 {- | Parsing expressions
@@ -220,6 +231,7 @@ pDef = do
     rstring "def"
     name <- pLIdentifierString
     vars <- try (many pLIdentifierString)
+    unique vars
     roperator "="
     body <- pExp
     roperator ";;"
@@ -285,9 +297,11 @@ pTypedef = do
     name <- pUIdentifierString
     -- many because type doesn't have to be parametrised
     typeVars <- try (many pTVar)
+    unique $ map (\(TVariable s) -> s) typeVars
     roperator "="
     -- there has to be at least one constructor
     constructors <- sepBy1 pTypedefConstructor (symbol "|")
+    unique $ map fst constructors
     roperator ";;"
     let retType = TAlgebraic name typeVars
     let constructors' = sortBy (comparing fst) constructors
