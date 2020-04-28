@@ -202,36 +202,4 @@ builtinIf =
                 _ -> fail "types mismatch"
         helper _ = fail "types mismatch"
     in Primitive "builtinIf" (TFun TBool $ TFun (TVariable "a") $ TFun (TVariable "a") (TVariable "a")) 3 helper
-    --in Primitive "builtinIf" (TFun TBool $ TFun (TVariable "__ifRetValue") $ TFun (TVariable "__ifRetValue") (TVariable "__ifRetValue")) 3 helper
-
-{- | Primitives
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtinAdd) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
-DInt 4
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtinSub) (AData $ DInt 5) ) (AData $ DInt 2)) M.empty
-DInt 3
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtinMul) (AData $ DInt 5) ) (AData $ DInt 2)) M.empty
-DInt 10
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtinDiv) (AData $ DInt 10) ) (AData $ DInt 3)) M.empty
-DInt 3
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtinMod) (AData $ DInt 10) ) (AData $ DInt 3)) M.empty
-DInt 1
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtinLand) (AData $ DBool True) ) (AData $ DBool True)) M.empty
-DBool True
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtinLor) (AData $ DBool True) ) (AData $ DBool False)) M.empty
-DBool True
->>> eval ( AFunApp (AData $DPrim builtinNeg) (AData $ DBool True) ) M.empty
-DBool False
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtinEq) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
-DBool True
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtinNeq) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
-DBool False
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtinLt) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
-DBool False
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtinLe) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
-DBool True
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtinGt) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
-DBool False
->>> eval ( AFunApp ( AFunApp (AData $DPrim builtinGe) (AData $ DInt 2) ) (AData $ DInt 2)) M.empty
-DBool True
--}
 

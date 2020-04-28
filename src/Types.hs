@@ -9,7 +9,7 @@ import Control.Monad.Except
 import Control.Monad.State
 import Control.Monad.Reader
 import Data.Maybe
-import Debug.Trace
+
 type Loc = Int
 type Rho = M.Map String Loc
 type Store = M.Map Loc Data
@@ -303,7 +303,6 @@ typeCheck prog =
         helper :: TypeEnv -> TopLevelExp -> TypeM TypeEnv
         helper e (Def _ _) = return e
         helper e (Expr tree) = do
-            traceM $ show tree
             (_, _) <- ti e tree
             return e
         helper e (Algebraic _ _ _ _) = return e
@@ -311,6 +310,5 @@ typeCheck prog =
     in
         do
             (env, sub) <- helperLetEnv initialEnv clauses
-            traceM $ show (apply sub env)
             foldM_ helper (apply sub env) prog
 

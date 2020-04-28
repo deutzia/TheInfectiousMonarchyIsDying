@@ -20,7 +20,7 @@ import Data.Ord
 import Types
 import Eval
 import Primitives
-import Debug.Trace
+
 type Parser = Parsec Void String
 
 reserved :: [String]
@@ -300,7 +300,6 @@ pTypedef = do
                     let
                         primType = foldr TFun retType types
                         primFun = \d -> do
-                            traceM $ "primName = " ++ show primName ++ " d = " ++ show d
                             return $ DAlgebraic primName d
                     in Primitive primName primType (length types) primFun
             )
@@ -311,12 +310,10 @@ pTypedef = do
     let matchClauseTypes = reverse $ map (\(_, args) -> foldr TFun matchRetType args) constructors'
     let mType = foldr TFun (TFun retType matchRetType) matchClauseTypes
     let mFun = (\args -> do
-            traceM $ "args = " ++ (show args)
             let funs = init args
             actualArg <- unlazy $ last args
             case actualArg of
                 DAlgebraic cName vals -> do
-                    traceM $ show $ zip funs $ cNames
                     return $ foldr
                         (
                             \(f, n) acc ->
@@ -324,14 +321,13 @@ pTypedef = do
                                     then foldl DLazyApp f vals
                                     else acc
                         )
-                        DUndefined -- should always match something
+                        DUndefined
                         (zip funs $ cNames)
-                t -> do
-                    traceM $ "\tt=" ++ show t
-                    return t)
+                _ -> undefined
+            )
 
-    let match = Primitive ("__match_" ++ name) mType (1 + length constructors) mFun
-    return $ Algebraic name (length typeVars) primitives match
+    let matchPrim = Primitive ("__match_" ++ name) mType (1 + length constructors) mFun
+    return $ Algebraic name (length typeVars) primitives matchPrim
 
 pExpr :: Parser TopLevelExp
 pExpr = do

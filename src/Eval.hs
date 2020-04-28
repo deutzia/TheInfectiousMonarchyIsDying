@@ -154,18 +154,3 @@ unlazy (DAlgebraic name elems) = do
 unlazy (DPrim (Primitive _ _ 0 f)) = f []
 unlazy a = return a
 
-{- | Basic eval tests
->>> eval ( AData $ DInt 5 ) M.empty
-DInt 5
->>> eval ( AData $ DBool True ) M.empty
-DBool True
->>> eval ( ALet [("x", AData $ DInt 2), ("y", AData $ DInt 3)] ( AFunApp ( AFunApp (AData $ DPrim builtinAdd) (AVariable "x") ) (AVariable "y"))) M.empty
-DInt 5
->>> eval (AFunApp (AData (DFun "x" ( AFunApp ( AFunApp (AData $ DPrim builtinMul) (AVariable "x") ) (AVariable "x")) M.empty)) (AData $ DInt 5)) M.empty
-DInt 25
->>> eval ( AIf (AData $ DBool True) (AData $ DInt 5) (AData $ DInt 1)) M.empty
-DInt 5
->>> eval ( AIf (AData $ DBool False) (AData $ DInt 5) (AData $ DInt 1)) M.empty
-DInt 1
--}
-
