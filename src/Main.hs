@@ -6,6 +6,7 @@ import Control.Monad.State
 import Text.Megaparsec
 import System.Environment
 import qualified Data.Map.Lazy as M
+import System.IO (stderr, hPutStrLn)
 import Parser
 import Types
 import Eval
@@ -25,10 +26,10 @@ main = do
         parseResult = runParser pProgram name prog
       in
       case parseResult of
-        Left err -> putStrLn $ errorBundlePretty err
+        Left err -> hPutStrLn stderr $ errorBundlePretty err
         Right program -> let res = exec program
                          in
                          case res of
-                            Left err -> putStrLn $ "ERROR: " ++ err
+                            Left err -> hPutStrLn stderr err
                             Right correct -> putStr correct
 
