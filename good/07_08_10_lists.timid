@@ -1,0 +1,16 @@
+def l = Nonempty . 1 . (Nonempty . 2 . (Nonempty . 3 . Empty)) ;;
+
+map . (fun el -> el + 1) . l ;;
+
+def emptyList = Empty ;;
+
+isEmpty . emptyList ;;
+isEmpty . l ;;
+
+head . l ;;
+tail . l ;;
+
+/- list of functions
+def lfun = Nonempty . (fun x -> 1 + x) . (Nonempty . (fun x -> 2 + x) . Empty) ;;
+
+

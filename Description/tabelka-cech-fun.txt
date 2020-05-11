@@ -6,11 +6,11 @@ Na 20 punktów
 + 05 (funkcje anonimowe i wyższego rzędu, częściowa aplikacja) +
 + 06 (obsługa błędów wykonania) +
 Listy:
-07 (z pattern matchingiem) +
-08 (z empty, head, tail) może w bibliotece standardowej
++ 07 (z pattern matchingiem)
++ 08 (z empty, head, tail) może w bibliotece standardowej
 09 (lukier) unlikely, ale jesli będę mieć czas
 Na 25 punktów
-10 (listy dowolnego typu, zagnieżdżone i listy funkcji) +
++ 10 (listy dowolnego typu, zagnieżdżone i listy funkcji) +
 + 11 (proste typy algebraiczne z jednopoziomowym pattern matchingiem) +
 + 12 (statyczne wiązanie identyfikatorów) +
 + 13 (statyczne typowanie) +

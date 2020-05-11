@@ -18,9 +18,11 @@ exec program = do
 main :: IO ()
 main = do
     argv <- getArgs
+    timid_prelude <- readFile "prelude.timid"
     contents <- if null argv then getContents else readFile $ head argv
+    let prog = contents ++ timid_prelude
     let name = if null argv then "stdin" else head argv
-        parseResult = runParser pProgram name contents
+        parseResult = runParser pProgram name prog
       in
       case parseResult of
         Left err -> putStrLn $ errorBundlePretty err

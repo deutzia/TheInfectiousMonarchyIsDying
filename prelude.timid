@@ -1,0 +1,53 @@
+typedef Maybe a = Just a | Nothing ;;
+def isJust = fun x ->
+    match x
+        | Just n -> True
+        | Nothing -> False
+    endmatch
+;;
+def isNothing x = ~ (isJust . x) ;;
+
+typedef Either a b = Left a | Right b ;;
+def isLeft x =
+    match x
+        | Left l -> True
+        | Right r -> False
+    endmatch
+;;
+def isRight x = ~ (isLeft . x) ;;
+
+typedef List a = Empty | Nonempty a (List a) ;;
+def head l =
+    match l
+        | Empty -> Nothing
+        | Nonempty h t -> Just . h
+    endmatch
+;;
+def tail l =
+    match l
+        | Empty -> Nothing
+        | Nonempty h t -> Just . t
+    endmatch
+;;
+def isEmpty l =
+    match l
+        | Empty -> True
+        | Nonempty h t -> False
+    endmatch
+;;
+def foldl f acc l =
+    match l
+        | Empty -> acc
+        | Nonempty h t ->
+            let newH = f . h . acc in foldl . f . newH . t
+    endmatch
+;;
+def foldr f acc l =
+    match l
+        | Empty -> acc
+        | Nonempty h t -> f . h . (foldr . f . acc . t)
+    endmatch
+;;
+def map f l = foldr . (fun el acc -> Nonempty . (f . el) . acc) . Empty . l ;;
+
+
