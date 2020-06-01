@@ -75,7 +75,7 @@ runProgram prog =
                 prepareEnv prog
                 -- reverse here, because foldM is like foldl, not foldr
                 lazyResults <- foldM helper [] $ reverse prog
-                mapM unlazy lazyResults
+                mapM unlazy_full lazyResults
 
 eval :: AST -> EvalM Data
 eval (AData d) = return d
@@ -148,9 +148,14 @@ unlazy (DReference loc) = do
     addStore loc result
     return result
 unlazy DUndefined = fail "unsolvable loop"
-unlazy (DAlgebraic name elems) = do
-    unlaziedElems <- mapM unlazy elems
-    return $ DAlgebraic name unlaziedElems
 unlazy (DPrim (Primitive _ _ 0 f)) = f []
 unlazy a = return a
 
+unlazy_full :: Data -> EvalM Data
+unlazy_full a = do
+    d <- unlazy a
+    case d of
+        DAlgebraic name elems -> do
+            unlaziedElems <- mapM unlazy_full elems
+            return $ DAlgebraic name unlaziedElems
+        res -> return res

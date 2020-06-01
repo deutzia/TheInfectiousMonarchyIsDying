@@ -1,0 +1,3 @@
+def l = Nonempty . 5 . l;;
+head . l;;
+
