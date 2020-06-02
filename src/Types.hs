@@ -88,12 +88,17 @@ data Type
 -- for whatever reason strongly connected components are already implemented
 -- https://hackage.haskell.org/package/containers-0.6.2.1/docs/Data-Graph.html#g:7
 -- so I may actually finish this on time
-orderLet :: AST -> AST
-orderLet (ALet l tree) =
+getSCC :: [(String, AST)] -> [[(String, AST)]]
+getSCC l =
     let
         vars = map fst l
         graph = map (\(name, t) -> ((name, t), name, filter (\v -> v `S.member` getVars t) vars)) l
-        scc = map G.flattenSCC $ G.stronglyConnComp graph
+    in map G.flattenSCC $ G.stronglyConnComp graph
+
+orderLet :: AST -> AST
+orderLet (ALet l tree) =
+    let
+        scc = getSCC l
     in foldr ALet tree scc
 orderLet _ = undefined
 
@@ -252,7 +257,7 @@ ti env let_@(ALet _ _) = do
     let actualLet = orderLet let_
     case actualLet of
         ALet l tree -> do
-            (new, sub) <- helperLetEnv env l
+            (new, sub) <- helperLetEnv (env, nullSubst) l
             (sx, tx) <- ti new tree
             return (sx `compose` sub, tx)
         _ -> undefined
@@ -261,8 +266,8 @@ ti _ _ = undefined -- return (nullSubst, TInt)
 -- prepare env and susbstitutions needed for parsing let-clauses and for
 -- preparing type environment (since global definitions are like a bunch of
 -- let clauses
-helperLetEnv :: TypeEnv -> [(String, AST)] -> TypeM (TypeEnv, Subst)
-helperLetEnv env l =
+helperLetEnv :: (TypeEnv, Subst) -> [(String, AST)] -> TypeM (TypeEnv, Subst)
+helperLetEnv (env, initialSub) l =
     let
         helperInsert :: TypeEnv -> (String, AST) -> TypeM TypeEnv
         helperInsert e (n, _) = do
@@ -282,7 +287,7 @@ helperLetEnv env l =
             return (M.insert n gen_t acc, e)
     in do
         new <- foldM helperInsert env l
-        (sub, new') <- foldM helperInfer (nullSubst, new) l
+        (sub, new') <- foldM helperInfer (initialSub, new) l
         let env' = apply sub env
         (new'', _) <- foldM helperGeneralize (new', env') l
         return (new'', sub)
@@ -299,7 +304,7 @@ getClauses =
 typeCheck :: Program -> TypeM ()
 typeCheck prog =
     let
-        clauses = getClauses prog
+        clauses = getSCC $ getClauses prog
         helperEnv :: TypeEnv -> TopLevelExp -> TypeEnv
         helperEnv e (Def _ _) = e
         helperEnv e (Expr _) = e
@@ -315,6 +320,6 @@ typeCheck prog =
         initialEnv = foldl helperEnv M.empty prog
     in
         do
-            (env, sub) <- helperLetEnv initialEnv clauses
+            (env, sub) <- foldM helperLetEnv (initialEnv, nullSubst) clauses
             foldM_ helper (apply sub env) prog
 

@@ -1,0 +1,3 @@
+def comp f g = fun x -> f . (g . x);;
+def comp2 = (comp . comp) . comp;;
+
